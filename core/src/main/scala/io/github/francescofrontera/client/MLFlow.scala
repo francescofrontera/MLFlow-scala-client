@@ -2,7 +2,9 @@ package io.github.francescofrontera.client
 
 import io.github.francescofrontera.configuration.ClientConfiguration
 import io.github.francescofrontera.configuration.ClientConfiguration.AppConf
-import io.github.francescofrontera.services.ExperimentService
+import io.github.francescofrontera.services.ExperimentService.ExperimentServiceImpl
+import io.github.francescofrontera.services.RunService.RunServiceImpl
+import io.github.francescofrontera.services.{ ExperimentService, RunService }
 import zio._
 
 trait MLFlow {
@@ -10,27 +12,29 @@ trait MLFlow {
 }
 
 object MLFlow {
-  type MLFlowResult[+A] = Task[A]
+  type MLFlowService[+A] = Task[A]
+  type MLFlowBuilder[+A] = IO[Nothing, A]
 
   trait Build {
     def clientConfiguration: ClientConfiguration.Service
-    def experiment: MLFlowResult[ExperimentService.Service]
+
+    def experiment: MLFlowService[ExperimentService.Service]
+    def run: MLFlowService[RunService.Service]
   }
 
-  trait Default extends Build {
-    val clientConfiguration: ClientConfiguration.Service = new AppConf
+  lazy val default = new MLFlow {
+    val builder: Build = new Build {
+      def clientConfiguration: ClientConfiguration.Service = new AppConf
 
-    def experiment: MLFlowResult[ExperimentService.Service] =
-      for {
-        clientConf        <- clientConfiguration.materializeConfig
-        experimentService <- Task.succeed(ExperimentService(clientConf))
-        //FIXME: ALL SERVICE
-      } yield experimentService
+      def experiment: MLFlowService[ExperimentService.Service] =
+        clientConfiguration.materializeConfig.map(new ExperimentServiceImpl(_) {})
+
+      def run: MLFlowService[RunService.Service] =
+        clientConfiguration.materializeConfig.map(new RunServiceImpl(_) {})
+    }
   }
 
-  val default = new MLFlow { val builder: Build = new Default {} }
-
-  def apply(): IO[Nothing, Build] =
+  def apply(): MLFlowBuilder[Build] =
     ZIO
       .accessM[MLFlow](modules => UIO.succeed(modules.builder))
       .provide(default)

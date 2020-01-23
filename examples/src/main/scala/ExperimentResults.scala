@@ -1,22 +1,24 @@
 import io.github.francescofrontera.client.MLFlow
 import io.github.francescofrontera.client.executor.Executor._
-import io.github.francescofrontera.models.{ Experiment, Experiments }
 
 /*
   Note: An instance of MLFlow tracking service is required to execute the program.
  */
-
 object ExperimentResults extends App {
   val experiments = for {
     mlflowClient <- MLFlow()
-    experiments  <- mlflowClient.experiment
+
+    experiments <- mlflowClient.experiment
+    mlrun       <- mlflowClient.run
 
     //Action over client
-    allExperiments <- experiments.getAll
-    singleExpById  <- experiments.getByExperimentId("1")
-  } yield (allExperiments, singleExpById)
+    allExperiments <- experiments.getByExperimentId("1")
+    runById        <- mlrun.getById(allExperiments.experiment.experiment_id)
+  } yield allExperiments
 
-  val result: Either[Throwable, (Experiments, Experiment)] = experiments.asEither
+  val result = experiments.asEither
 
-  sys.exit(1)
+  println(result)
+
+  sys.exit(0)
 }
