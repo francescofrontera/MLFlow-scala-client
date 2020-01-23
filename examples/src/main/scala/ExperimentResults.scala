@@ -13,7 +13,6 @@ object ExperimentResults extends App {
 
     //Action over client
     allExperiments <- experiments.getByExperimentId("1")
-    runById        <- mlrun.getById(allExperiments.experiment.experiment_id)
   } yield allExperiments
 
   val result = experiments.asEither
