@@ -51,12 +51,13 @@ lazy val core = (project in file("core"))
     libraryDependencies ++= Seq(
       "com.softwaremill.sttp.client" %% "core"                          % sttpVersion,
       "com.softwaremill.sttp.client" %% "async-http-client-backend-zio" % sttpVersion,
-      "com.github.pureconfig"        %% "pureconfig"                    % pureConfigVersion,
-    ) ++ Seq(
-      "io.circe" %% "circe-core",
-      "io.circe" %% "circe-generic",
-      "io.circe" %% "circe-parser"
-    ).map(_ % circeVersion)
+      "com.softwaremill.sttp.client" %% "circe"                         % sttpVersion,
+      "io.circe"                     %% "circe-generic"                 % circeVersion,
+    )
   )
 
-lazy val examples = (project in file("examples")).dependsOn(core)
+lazy val examples = (project in file("examples"))
+  .dependsOn(core)
+  .settings(
+    fork in run := true
+  )
