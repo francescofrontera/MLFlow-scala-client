@@ -6,12 +6,12 @@ import io.github.francescofrontera.client.services.{ ExperimentService, RunServi
 import zio._
 
 object MLFlow {
-  type MLFLowResult[+A] = ZIO[MLFlow.Default, Throwable, A]
+  type MLFLowResult[+A] = IO[Throwable, A]
   type FnInFnOut[OUT]   = (ExperimentService.Service, RunService.Service) => Task[OUT]
 
   trait Default extends InternalClient
 
-  object Live extends Default {
+  private[this] object Live extends Default {
     def sttp: InternalClient.Serve = InternalClient.SttpMaterialization
   }
 
@@ -21,6 +21,6 @@ object MLFlow {
       val runService        = new RunServiceImpl(mlflowURL)
 
       f(experimentService, runService).ensuring(taskClient.close().ignore)
-    }
+    } provide Live
 
 }

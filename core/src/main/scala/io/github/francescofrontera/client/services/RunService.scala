@@ -21,7 +21,7 @@ object RunService {
     private[this] val RunURL: Seq[String] = "runs" +: Nil
 
     override def getById(runId: String): Task[Run] = {
-      val url = URLUtils.callGet(RunURL ++ Seq("get"), mlflowURL, Map("run_id" -> runId))
+      val url = URLUtils.makeURL(RunURL ++ Seq("get"), mlflowURL, Map("run_id" -> runId))
 
       for {
         jsonResult <- basicRequest.get(Uri(url)).response(asJson[Run]).send()

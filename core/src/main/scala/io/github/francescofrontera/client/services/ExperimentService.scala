@@ -24,7 +24,7 @@ object ExperimentService {
     private[this] val ExperimentPath = "experiments" +: Nil
 
     def getAll: ExperimentResult[Experiments] = {
-      val url = Uri(URLUtils.callGet(ExperimentPath ++ Seq("list"), mlflowURL))
+      val url = Uri(URLUtils.makeURL(ExperimentPath ++ Seq("list"), mlflowURL))
 
       for {
         jsonResult <- basicRequest.get(url).response(asJson[Experiments]).send()
@@ -33,7 +33,7 @@ object ExperimentService {
     }
 
     override def getById(id: String): ExperimentResult[Experiment] = {
-      val url = URLUtils.callGet(pathParameters = ExperimentPath ++ Seq("get"),
+      val url = URLUtils.makeURL(pathParameters = ExperimentPath ++ Seq("get"),
                                  basePath = mlflowURL,
                                  queryParameters = Map("experiment_id" -> id))
 
