@@ -3,11 +3,12 @@ package io.github.francescofrontera.client
 import io.github.francescofrontera.client.services.ExperimentService.ExperimentServiceImpl
 import io.github.francescofrontera.client.services.RunService.RunServiceImpl
 import io.github.francescofrontera.client.services.{ ExperimentService, RunService }
+import sttp.client.asynchttpclient.zio.AsyncHttpClientZioBackend
 import zio._
 
 object MLFlow {
   type MLFLowResult[+A] = IO[Throwable, A]
-  type FnInFnOut[OUT]   = (ExperimentService.Service, RunService.Service) => Task[OUT]
+  type FnInFnOut[OUT]   = (ExperimentService with RunService) => Task[OUT]
 
   trait Default extends InternalClient
 
@@ -16,11 +17,15 @@ object MLFlow {
   }
 
   def apply[OUT](mlflowURL: String)(f: FnInFnOut[OUT]): MLFLowResult[OUT] =
-    ZIO.accessM[Default](_.sttp.taskClient) flatMap { implicit taskClient =>
-      val experimentService = new ExperimentServiceImpl(mlflowURL)
-      val runService        = new RunServiceImpl(mlflowURL)
+    for {
+      client <- AsyncHttpClientZioBackend()
+      env = new ExperimentService with RunService {
+        implicit val be = client
 
-      f(experimentService, runService).ensuring(taskClient.close().ignore)
-    } provide Live
+        def experimentService: ExperimentService.Service = new ExperimentServiceImpl(mlflowURL)
+        def runService: RunService.Service               = new RunServiceImpl(mlflowURL)
+      }
+      action <- f(env).ensuring(client.close().ignore)
+    } yield action
 
 }

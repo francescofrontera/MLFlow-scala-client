@@ -6,11 +6,14 @@ object TryServices extends DefaultRuntime {
   def main(args: Array[String]): Unit = {
 
     val program: MLFLowResult[List[Product]] =
-      MLFlow("http://localhost:5000/api/2.0/preview/mlflow") { (exService, runService) =>
+      MLFlow("http://localhost:5000/api/2.0/preview/mlflow") { modules =>
+        val experimentes = modules.experimentService
+        val run          = modules.runService
+
         for {
-          allExperiments <- exService.getAll
-          byId           <- exService.getById("1")
-          run            <- runService.getById("231e8ac802ed42a8b807174f1d9e9501")
+          allExperiments <- experimentes.getAll
+          byId           <- experimentes.getById("1")
+          run            <- run.getById("231e8ac802ed42a8b807174f1d9e9501")
         } yield List(allExperiments, byId, run)
       }
 
