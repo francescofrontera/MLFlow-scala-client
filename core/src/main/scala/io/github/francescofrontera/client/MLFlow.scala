@@ -8,24 +8,19 @@ import zio._
 
 object MLFlow {
   type MLFLowResult[+A] = IO[Throwable, A]
-  type FnInFnOut[OUT]   = (ExperimentService with RunService) => Task[OUT]
 
-  trait Default extends InternalClient
+  trait AllService extends ExperimentService with RunService
 
-  private[this] object Live extends Default {
-    def sttp: InternalClient.Serve = InternalClient.SttpMaterialization
-  }
-
-  def apply[OUT](mlflowURL: String)(f: FnInFnOut[OUT]): MLFLowResult[OUT] =
+  def apply[OUT](mlflowURL: String)(f: ZIO[AllService, Throwable, OUT]): MLFLowResult[OUT] =
     for {
       client <- AsyncHttpClientZioBackend()
-      env = new ExperimentService with RunService {
+      env = new AllService {
         implicit val be = client
 
         def experimentService: ExperimentService.Service = new ExperimentServiceImpl(mlflowURL)
         def runService: RunService.Service               = new RunServiceImpl(mlflowURL)
       }
-      action <- f(env).ensuring(client.close().ignore)
+      action <- f.ensuring(client.close().ignore).provide(env)
     } yield action
 
 }

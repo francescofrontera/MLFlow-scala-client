@@ -1,9 +1,9 @@
 package io.github.francescofrontera.client.services
 
-import io.github.francescofrontera.client.InternalClient.ClientType
 import io.github.francescofrontera.models._
 import io.github.francescofrontera.utils.URLUtils
 import sttp.client._
+import sttp.client.asynchttpclient.WebSocketHandler
 import sttp.client.circe._
 import sttp.model.Uri
 import zio.Task
@@ -20,7 +20,8 @@ object ExperimentService {
     def getById(id: String): ExperimentResult[Experiment]
   }
 
-  class ExperimentServiceImpl(mlflowURL: String)(implicit be: ClientType) extends ExperimentService.Service {
+  class ExperimentServiceImpl(mlflowURL: String)(implicit be: SttpBackend[Task, Nothing, WebSocketHandler])
+      extends ExperimentService.Service {
     private[this] val ExperimentPath = "experiments" +: Nil
 
     def getAll: ExperimentResult[Experiments] = {
