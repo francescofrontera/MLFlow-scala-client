@@ -1,48 +1,38 @@
 package io.github.francescofrontera.client.services
 
+import io.github.francescofrontera.client.{ ClientCall, InternalClient }
 import io.github.francescofrontera.models._
 import io.github.francescofrontera.utils.URLUtils
-import sttp.client._
-import sttp.client.asynchttpclient.WebSocketHandler
-import sttp.client.circe._
 import sttp.model.Uri
-import zio.Task
+import zio.{ RIO, Task }
 
 trait ExperimentService {
-  def experimentService: ExperimentService.Service
+  def experimentService: ExperimentService.Service[Any]
 }
 
 object ExperimentService {
-  type ExperimentResult[+A] = Task[A]
+  type ExperimentResult[R, +A] = RIO[R, A]
 
-  trait Service {
-    def getAll: ExperimentResult[Experiments]
-    def getById(id: String): ExperimentResult[Experiment]
+  trait Service[R] {
+    def getAll: ExperimentResult[R, Experiments]
+    def getById(id: String): ExperimentResult[R, Experiment]
   }
 
-  class ExperimentServiceImpl(mlflowURL: String)(implicit be: SttpBackend[Task, Nothing, WebSocketHandler])
-      extends ExperimentService.Service {
+  class ExperimentServiceImpl(mlflowURL: String)(implicit be: InternalClient) extends ExperimentService.Service[Any] {
     private[this] val ExperimentPath = "experiments" +: Nil
 
-    def getAll: ExperimentResult[Experiments] = {
-      val url = Uri(URLUtils.makeURL(ExperimentPath ++ Seq("list"), mlflowURL))
+    final def getAll: Task[Experiments] =
+      ClientCall.genericGet[Experiments](
+        Uri(URLUtils.makeURL(ExperimentPath ++ Seq("list"), mlflowURL))
+      )
 
-      //FIXME: Refactoring this block..
-      for {
-        jsonResult <- basicRequest.get(url).response(asJson[Experiments]).send()
-        value      <- Task.fromEither(jsonResult.body)
-      } yield value
-    }
-
-    override def getById(id: String): ExperimentResult[Experiment] = {
-      val url = URLUtils.makeURL(pathParameters = ExperimentPath ++ Seq("get"),
-                                 basePath = mlflowURL,
-                                 queryParameters = Map("experiment_id" -> id))
-
-      for {
-        jsonResult <- basicRequest.get(Uri(url)).response(asJson[Experiment]).send()
-        experiment <- Task.fromEither(jsonResult.body)
-      } yield experiment
-    }
+    final def getById(id: String): Task[Experiment] =
+      ClientCall.genericGet[Experiment](
+        Uri(
+          URLUtils.makeURL(pathParameters = ExperimentPath ++ Seq("get"),
+                           basePath = mlflowURL,
+                           queryParameters = Map("experiment_id" -> id))
+        )
+      )
   }
 }

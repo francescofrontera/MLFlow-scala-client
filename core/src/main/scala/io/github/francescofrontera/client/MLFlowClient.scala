@@ -7,22 +7,26 @@ import sttp.client.asynchttpclient.zio.AsyncHttpClientZioBackend
 import zio._
 import zio.console.Console
 
-object MLFlow {
+object MLFlowClient {
   type MLFLowResult[+A] = IO[Throwable, A]
   type Fun[OUT]         = AllService => MLFLowResult[OUT]
 
-  sealed trait AllService extends ExperimentService with RunService with Console.Live
+  sealed trait AllService extends ExperimentService with RunService with Console.Live {
+    implicit def be: InternalClient
+  }
 
   def apply[OUT](mlflowURL: String)(f: Fun[OUT]): MLFLowResult[OUT] =
     for {
       client <- AsyncHttpClientZioBackend()
       env = new AllService {
-        implicit val be = client
+        implicit val be: InternalClient = client
 
-        def experimentService: ExperimentService.Service = new ExperimentServiceImpl(mlflowURL)
-        def runService: RunService.Service               = new RunServiceImpl(mlflowURL)
+        def experimentService = new ExperimentServiceImpl(mlflowURL)
+        def runService        = new RunServiceImpl(mlflowURL)
       }
-      action <- ZIO.accessM[AllService](services => f(services).ensuring(client.close().ignore)).provide(env)
+      action <- ZIO.accessM[AllService] { services =>
+        f(services).ensuring(client.close().ignore)
+      } provide env
     } yield action
 
 }
