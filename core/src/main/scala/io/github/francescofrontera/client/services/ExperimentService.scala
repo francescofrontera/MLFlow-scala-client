@@ -27,6 +27,7 @@ object ExperimentService {
     def getAll: ExperimentResult[Experiments] = {
       val url = Uri(URLUtils.makeURL(ExperimentPath ++ Seq("list"), mlflowURL))
 
+      //FIXME: Refactoring this block..
       for {
         jsonResult <- basicRequest.get(url).response(asJson[Experiments]).send()
         value      <- Task.fromEither(jsonResult.body)

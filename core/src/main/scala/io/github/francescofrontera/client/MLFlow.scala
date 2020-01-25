@@ -8,12 +8,12 @@ import zio._
 import zio.console.Console
 
 object MLFlow {
-  type MLFLowResult[+A]  = IO[Throwable, A]
-  type ServiceAction[+A] = RIO[AllService, A]
+  type MLFLowResult[+A] = IO[Throwable, A]
+  type Fun[OUT]         = AllService => MLFLowResult[OUT]
 
   sealed trait AllService extends ExperimentService with RunService with Console.Live
 
-  def apply[OUT](mlflowURL: String)(f: ServiceAction[OUT]): MLFLowResult[OUT] =
+  def apply[OUT](mlflowURL: String)(f: Fun[OUT]): MLFLowResult[OUT] =
     for {
       client <- AsyncHttpClientZioBackend()
       env = new AllService {
@@ -22,7 +22,7 @@ object MLFlow {
         def experimentService: ExperimentService.Service = new ExperimentServiceImpl(mlflowURL)
         def runService: RunService.Service               = new RunServiceImpl(mlflowURL)
       }
-      action <- f.ensuring(client.close().ignore).provide(env)
+      action <- ZIO.accessM[AllService](services => f(services).ensuring(client.close().ignore)).provide(env)
     } yield action
 
 }
