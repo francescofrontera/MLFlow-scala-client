@@ -13,17 +13,11 @@ object TryServices extends App {
 
       for {
         allExperiments <- experiments.getAll
-
-        _ <- console.putStr(s"ALL EXPERIMENTS: $allExperiments\n")
-
-        byId <- experiments.getById("1")
-
-        _ <- console.putStr(s"Experiment: $byId\n")
-
-        run <- run.getById("231e8ac802ed42a8b807174f1d9e9501")
-
-        _ <- console.putStr(s"Run: $run\n")
-
-      } yield List(allExperiments, byId, run)
+        _              <- console.putStr(s"Experiments: $allExperiments\n")
+        experiment     <- experiments.getById("1")
+        _              <- console.putStr(s"Experiment: $experiment\n")
+        run            <- run.getById("231e8ac802ed42a8b807174f1d9e9501")
+        _              <- console.putStr(s"Run: $run\n")
+      } yield List(allExperiments, experiment, run)
     }.fold(_ => 1, _ => 0)
 }
