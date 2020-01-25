@@ -5,13 +5,15 @@ import io.github.francescofrontera.client.services.RunService.RunServiceImpl
 import io.github.francescofrontera.client.services.{ ExperimentService, RunService }
 import sttp.client.asynchttpclient.zio.AsyncHttpClientZioBackend
 import zio._
+import zio.console.Console
 
 object MLFlow {
-  type MLFLowResult[+A] = IO[Throwable, A]
+  type MLFLowResult[+A]  = IO[Throwable, A]
+  type ServiceAction[+A] = RIO[AllService, A]
 
-  trait AllService extends ExperimentService with RunService
+  sealed trait AllService extends ExperimentService with RunService with Console.Live
 
-  def apply[OUT](mlflowURL: String)(f: ZIO[AllService, Throwable, OUT]): MLFLowResult[OUT] =
+  def apply[OUT](mlflowURL: String)(f: ServiceAction[OUT]): MLFLowResult[OUT] =
     for {
       client <- AsyncHttpClientZioBackend()
       env = new AllService {
