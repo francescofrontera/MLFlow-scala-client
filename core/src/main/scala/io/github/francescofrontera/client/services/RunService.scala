@@ -1,9 +1,8 @@
 package io.github.francescofrontera.client.services
 
 import io.github.francescofrontera.client.{ ClientCall, InternalClient }
-import io.github.francescofrontera.models.Run
+import io.github.francescofrontera.models.{ Run, RunError }
 import io.github.francescofrontera.utils.URLUtils
-import sttp.model.Uri
 import zio.{ RIO, Task }
 
 trait RunService {
@@ -17,20 +16,20 @@ object RunService {
     def getById(runId: String): RunResult[R, Run]
   }
 
-  class RunServiceImpl(mlflowURL: String)(implicit be: InternalClient) extends RunService.Service[Any] {
+  final class RunServiceImpl(mlflowURL: String)(implicit be: InternalClient) extends RunService.Service[Any] {
     type RunTask[+A] = Task[A]
 
     private[this] val RunURL: Seq[String] = "runs" +: Nil
 
     def getById(runId: String): RunTask[Run] =
-      ClientCall.genericGet[Run](
-        Uri(
+      ClientCall
+        .genericGet[Run](
           URLUtils.makeURL(
             pathParameters = RunURL ++ Seq("get"),
             basePath = mlflowURL,
             queryParameters = Map("run_id" -> runId)
           )
         )
-      )
+        .mapError(error => RunError(error.getMessage))
   }
 }

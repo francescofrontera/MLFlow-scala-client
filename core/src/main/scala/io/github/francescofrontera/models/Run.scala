@@ -1,6 +1,10 @@
 package io.github.francescofrontera.models
 
-import io.circe._, io.circe.generic.semiauto._
+import io.circe._
+import io.circe.generic.semiauto._
+import io.github.francescofrontera.models.error.MLFlowClientError
+
+final case class RunError(message: String) extends MLFlowClientError(message)
 
 final case class Run(run: Run.RunObject)
 
@@ -23,7 +27,6 @@ object Run {
 
   final case class RunObject(info: Run.Info, data: Run.Data)
 
-  //FIXME: Consider to split all decoder and compose there....
   //Decoders
   lazy implicit val runInfoDecoder: Decoder[Info]        = deriveDecoder[Info]
   lazy implicit val runMetricDecoder: Decoder[Metric]    = deriveDecoder[Metric]

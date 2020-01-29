@@ -1,7 +1,7 @@
 import io.github.francescofrontera.client.MLFlowClient
+import io.github.francescofrontera.client.Executor._
 
 object TryServices {
-  import MLFlowClient._
 
   def main(args: Array[String]): Unit = {
     val clientResult = MLFlowClient("http://localhost:5000/api/2.0/preview/mlflow") { modules =>

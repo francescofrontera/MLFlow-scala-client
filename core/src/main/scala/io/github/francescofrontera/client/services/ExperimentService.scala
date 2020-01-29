@@ -1,10 +1,9 @@
 package io.github.francescofrontera.client.services
 
-import io.github.francescofrontera.client.{ ClientCall, InternalClient }
+import io.github.francescofrontera.client._
 import io.github.francescofrontera.models._
 import io.github.francescofrontera.utils.URLUtils
-import sttp.model.Uri
-import zio.{ RIO, Task }
+import zio._
 
 trait ExperimentService {
   def experimentService: ExperimentService.Service[Any]
@@ -18,26 +17,27 @@ object ExperimentService {
     def getById(id: String): ExperimentResult[R, Experiment]
   }
 
-  class ExperimentServiceImpl(mlflowURL: String)(implicit be: InternalClient) extends ExperimentService.Service[Any] {
+  final class ExperimentServiceImpl(mlflowURL: String)(implicit be: InternalClient)
+      extends ExperimentService.Service[Any] {
     private[this] val ExperimentPath = "experiments" +: Nil
 
     def getAll: Task[Experiments] =
-      ClientCall.genericGet[Experiments](
-        Uri(
+      ClientCall
+        .genericGet[Experiments](
           URLUtils.makeURL(
             pathParameters = ExperimentPath ++ Seq("list"),
             basePath = mlflowURL
           )
         )
-      )
+        .mapError(error => ExperimentsError(error.getMessage))
 
     def getById(id: String): Task[Experiment] =
-      ClientCall.genericGet[Experiment](
-        Uri(
-          URLUtils.makeURL(pathParameters = ExperimentPath ++ Seq("get"),
-                           basePath = mlflowURL,
+      ClientCall
+        .genericGet[Experiment](
+          URLUtils.makeURL(basePath = mlflowURL,
+                           pathParameters = ExperimentPath ++ Seq("get"),
                            queryParameters = Map("experiment_id" -> id))
         )
-      )
+        .mapError(error => ExperimentsError(error.getMessage))
   }
 }
