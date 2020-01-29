@@ -25,8 +25,8 @@ object RunService {
       ClientCall
         .genericGet[Run](
           URLUtils.makeURL(
-            pathParameters = RunURL ++ Seq("get"),
             basePath = mlflowURL,
+            pathParameters = RunURL ++ Seq("get"),
             queryParameters = Map("run_id" -> runId)
           )
         )

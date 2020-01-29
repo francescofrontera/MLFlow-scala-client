@@ -9,7 +9,6 @@ import zio.console.Console
 
 object MLFlowClient {
   type MLFLowResult[+A] = IO[Throwable, A]
-  type Client           = RIO[AllService, AllService]
   type Fun[OUT]         = AllService => MLFLowResult[OUT]
 
   sealed trait AllService extends ExperimentService with RunService with Console.Live {
@@ -25,8 +24,6 @@ object MLFlowClient {
         def experimentService = new ExperimentServiceImpl(mlflowURL)
         def runService        = new RunServiceImpl(mlflowURL)
       }
-      action <- ZIO.accessM[AllService] { services =>
-        f(services).ensuring(client.close().ignore)
-      } provide env
+      action <- ZIO.accessM[AllService](f(_).ensuring(client.close().ignore)).provide(env)
     } yield action
 }

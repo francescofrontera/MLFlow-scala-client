@@ -8,7 +8,7 @@ import scala.concurrent.Future
 
 object Executor {
   implicit class ExecutorOps[A](program: MLFLowResult[A]) {
-    val runtime = Runtime(program, PlatformLive.Default)
+    private[this] val runtime = Runtime(program, PlatformLive.Default)
 
     def result: Either[Throwable, A]              = runtime.unsafeRun(program.either)
     def asyncResult: Future[Either[Throwable, A]] = runtime.unsafeRunToFuture(program.either).future
