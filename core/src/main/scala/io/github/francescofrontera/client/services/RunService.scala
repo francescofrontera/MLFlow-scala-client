@@ -18,15 +18,17 @@ object RunService {
   }
 
   class RunServiceImpl(mlflowURL: String)(implicit be: InternalClient) extends RunService.Service[Any] {
+    type RunTask[+A] = Task[A]
+
     private[this] val RunURL: Seq[String] = "runs" +: Nil
 
-    def getById(runId: String): Task[Run] =
+    def getById(runId: String): RunTask[Run] =
       ClientCall.genericGet[Run](
         Uri(
           URLUtils.makeURL(
-            RunURL ++ Seq("get"),
-            mlflowURL,
-            Map("run_id" -> runId)
+            pathParameters = RunURL ++ Seq("get"),
+            basePath = mlflowURL,
+            queryParameters = Map("run_id" -> runId)
           )
         )
       )

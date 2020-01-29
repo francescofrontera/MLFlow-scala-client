@@ -21,12 +21,17 @@ object ExperimentService {
   class ExperimentServiceImpl(mlflowURL: String)(implicit be: InternalClient) extends ExperimentService.Service[Any] {
     private[this] val ExperimentPath = "experiments" +: Nil
 
-    final def getAll: Task[Experiments] =
+    def getAll: Task[Experiments] =
       ClientCall.genericGet[Experiments](
-        Uri(URLUtils.makeURL(ExperimentPath ++ Seq("list"), mlflowURL))
+        Uri(
+          URLUtils.makeURL(
+            pathParameters = ExperimentPath ++ Seq("list"),
+            basePath = mlflowURL
+          )
+        )
       )
 
-    final def getById(id: String): Task[Experiment] =
+    def getById(id: String): Task[Experiment] =
       ClientCall.genericGet[Experiment](
         Uri(
           URLUtils.makeURL(pathParameters = ExperimentPath ++ Seq("get"),

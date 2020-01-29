@@ -1,10 +1,10 @@
 import io.github.francescofrontera.client.MLFlowClient
-import zio._
 
-object TryServices extends App {
+object TryServices {
+  import MLFlowClient._
 
-  override def run(args: List[String]): ZIO[zio.ZEnv, Nothing, Int] =
-    MLFlowClient("http://localhost:5000/api/2.0/preview/mlflow") { modules =>
+  def main(args: Array[String]): Unit = {
+    val clientResult = MLFlowClient("http://localhost:5000/api/2.0/preview/mlflow") { modules =>
       val (experiments, run, console) = (
         modules.experimentService,
         modules.runService,
@@ -13,11 +13,21 @@ object TryServices extends App {
 
       for {
         allExperiments <- experiments.getAll
-        _              <- console.putStr(s"Experiments: $allExperiments\n")
-        experiment     <- experiments.getById("1")
-        _              <- console.putStr(s"Experiment: $experiment\n")
-        run            <- run.getById("231e8ac802ed42a8b807174f1d9e9501")
-        _              <- console.putStr(s"Run: $run\n")
-      } yield List(allExperiments, experiment, run)
-    }.fold(_ => 1, _ => 0)
+
+        _ <- console.putStr(s"Experiments: $allExperiments\n")
+
+        experiment <- experiments.getById("1")
+
+        _ <- console.putStr(s"Experiment: $experiment\n")
+
+        run <- run.getById("bebec7f85a104ba1b4cd8a8905a74127")
+
+        _ <- console.putStr(s"Run: $run\n")
+      } yield (allExperiments, experiment, run)
+
+    }.result
+
+    println(clientResult)
+  }
+
 }

@@ -6,6 +6,9 @@ import io.github.francescofrontera.client.services.{ ExperimentService, RunServi
 import sttp.client.asynchttpclient.zio.AsyncHttpClientZioBackend
 import zio._
 import zio.console.Console
+import zio.internal.PlatformLive
+
+import scala.concurrent.Future
 
 object MLFlowClient {
   type MLFLowResult[+A] = IO[Throwable, A]
@@ -13,6 +16,13 @@ object MLFlowClient {
 
   sealed trait AllService extends ExperimentService with RunService with Console.Live {
     implicit def be: InternalClient
+  }
+
+  implicit class Executor[A](program: MLFLowResult[A]) {
+    val runtime = Runtime(program, PlatformLive.Default)
+
+    def result: Either[Throwable, A]              = runtime.unsafeRun(program.either)
+    def asyncResult: Future[Either[Throwable, A]] = runtime.unsafeRunToFuture(program.either).future
   }
 
   def apply[OUT](mlflowURL: String)(f: Fun[OUT]): MLFLowResult[OUT] =
