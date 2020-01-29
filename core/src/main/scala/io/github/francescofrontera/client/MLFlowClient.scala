@@ -9,6 +9,7 @@ import zio.console.Console
 
 object MLFlowClient {
   type MLFLowResult[+A] = IO[Throwable, A]
+  type Client           = RIO[AllService, AllService]
   type Fun[OUT]         = AllService => MLFLowResult[OUT]
 
   sealed trait AllService extends ExperimentService with RunService with Console.Live {
@@ -28,5 +29,4 @@ object MLFlowClient {
         f(services).ensuring(client.close().ignore)
       } provide env
     } yield action
-
 }

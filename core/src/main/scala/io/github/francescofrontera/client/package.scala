@@ -9,6 +9,7 @@ import zio.Task
 package object client {
   type InternalClient = SttpBackend[Task, Nothing, WebSocketHandler]
 
+  //TODO: use Module Patter here (for better test) ???.
   object ClientCall {
     import sttp.client._
     import sttp.client.circe._

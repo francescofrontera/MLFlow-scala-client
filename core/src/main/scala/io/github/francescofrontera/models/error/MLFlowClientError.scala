@@ -1,5 +1,3 @@
 package io.github.francescofrontera.models.error
 
-trait MLFlowClientError extends RuntimeException {
-  def message: String
-}
+abstract class MLFlowClientError(message: String) extends RuntimeException
