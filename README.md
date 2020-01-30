@@ -6,7 +6,7 @@ MLFlow-scala-client is a fresh made, pure functional, wrapper around MFLow track
 val clientResult: Either[Throwable, Experiments] =
       MLFlowClient("http://localhost:5000/api/2.0/preview/mlflow")(_.experimentService.getAll).result
 
-res0: Either[Throwable, Experiments] = Right(
+clientResult: Either[Throwable, Experiments] = Right(
     Experiments(
         List(
             ExperimentObject(

@@ -9,21 +9,18 @@ import zio.console.Console
 
 object MLFlowClient {
   type MLFLowResult[+A] = IO[Throwable, A]
-  type Fun[OUT]         = AllService => MLFLowResult[OUT]
+  type Fun[OUT]         = ClientLive => MLFLowResult[OUT]
 
-  sealed trait AllService extends ExperimentService with RunService with Console.Live {
-    implicit def be: InternalClient
-  }
+  sealed trait ClientLive extends ExperimentService with RunService with Console.Live
 
   def apply[OUT](mlflowURL: String)(f: Fun[OUT]): MLFLowResult[OUT] =
-    for {
-      client <- AsyncHttpClientZioBackend()
-      env = new AllService {
-        implicit val be: InternalClient = client
-
+    AsyncHttpClientZioBackend().toManaged(_.close().orDie) use { implicit cli =>
+      val materializedCLive = new ClientLive {
         def experimentService = new ExperimentServiceImpl(mlflowURL)
         def runService        = new RunServiceImpl(mlflowURL)
       }
-      action <- ZIO.accessM[AllService](f(_).ensuring(client.close().ignore)).provide(env)
-    } yield action
+
+      ZIO.accessM[ClientLive](f).provide(materializedCLive)
+    }
+
 }
