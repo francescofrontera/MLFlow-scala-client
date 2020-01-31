@@ -11,7 +11,7 @@ private[client] object ClientCall {
 
   def genericGet[D: Decoder](uri: Uri)(implicit be: SttpBackend[Task, Nothing, WebSocketHandler]): Task[D] =
     for {
-      dResult        <- basicRequest.get(uri).response(asJson[D]).send()
-      resultAsEither <- Task.fromEither(dResult.body)
+      decoodeResult  <- basicRequest.get(uri).response(asJson[D]).send()
+      resultAsEither <- Task.fromEither(decoodeResult.body)
     } yield resultAsEither
 }
