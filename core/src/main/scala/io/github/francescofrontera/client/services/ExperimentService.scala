@@ -1,12 +1,12 @@
 package io.github.francescofrontera.client.services
 
-import io.github.francescofrontera.client._
+import io.github.francescofrontera.client.internal._
 import io.github.francescofrontera.models._
 import io.github.francescofrontera.utils.URLUtils
 import zio._
 
 trait ExperimentService {
-  def experimentService: ExperimentService.Service[Any]
+  def experimentService: ExperimentService.Service[InternalClient]
 }
 
 object ExperimentService {
@@ -17,27 +17,37 @@ object ExperimentService {
     def getById(id: String): ExperimentResult[R, Experiment]
   }
 
-  final class ExperimentServiceImpl(mlflowURL: String)(implicit be: InternalClient)
-      extends ExperimentService.Service[Any] {
+  trait Live extends ExperimentService {
     private[this] val ExperimentPath = "experiments" +: Nil
 
-    def getAll: Task[Experiments] =
-      ClientCall
-        .genericGet[Experiments](
-          URLUtils.makeURL(
-            pathParameters = ExperimentPath ++ Seq("list"),
-            basePath = mlflowURL
-          )
-        )
-        .mapError(error => ExperimentsError(error.getMessage))
+    def experimentService: Service[InternalClient] = new ExperimentService.Service[InternalClient] {
+      def getAll: ExperimentResult[InternalClient, Experiments] =
+        ZIO.accessM[InternalClient](_.internalClient.getClient) flatMap { cli =>
+          import cli._
 
-    def getById(id: String): Task[Experiment] =
-      ClientCall
-        .genericGet[Experiment](
-          URLUtils.makeURL(basePath = mlflowURL,
-                           pathParameters = ExperimentPath ++ Seq("get"),
-                           queryParameters = Map("experiment_id" -> id))
-        )
-        .mapError(error => ExperimentsError(error.getMessage))
+          ClientCall
+            .genericGet[Experiments](
+              URLUtils.makeURL(
+                pathParameters = ExperimentPath ++ Seq("list"),
+                basePath = cli.url
+              )
+            )
+            .mapError(error => ExperimentsError(error.getMessage))
+        }
+
+      def getById(id: String): ExperimentResult[InternalClient, Experiment] =
+        ZIO.accessM[InternalClient](_.internalClient.getClient) flatMap { cli =>
+          import cli._
+
+          ClientCall
+            .genericGet[Experiment](
+              URLUtils.makeURL(basePath = cli.url,
+                               pathParameters = ExperimentPath ++ Seq("get"),
+                               queryParameters = Map("experiment_id" -> id))
+            )
+        }
+    }
   }
+
+  object Live extends Live
 }
