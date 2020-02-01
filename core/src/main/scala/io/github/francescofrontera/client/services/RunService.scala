@@ -1,7 +1,7 @@
 package io.github.francescofrontera.client.services
 
-import io.github.francescofrontera.client.internal.{ ClientCall, InternalClient }
-import io.github.francescofrontera.models.{ Run, RunError }
+import io.github.francescofrontera.client.internal.InternalClient
+import io.github.francescofrontera.models.Run
 import io.github.francescofrontera.utils.URLUtils
 import zio.{ RIO, ZIO }
 
@@ -19,22 +19,20 @@ object RunService {
   trait Live extends RunService {
     private[this] val RunURL: Seq[String] = "runs" +: Nil
 
-    def runService: Service[InternalClient] = new RunService.Service[InternalClient] {
-      def getById(runId: String): RunResult[InternalClient, Run] =
-        ZIO.accessM[InternalClient](_.internalClient.getClient) flatMap { cli =>
-          import cli._
-
-          ClientCall
+    def runService: Service[InternalClient] =
+      (runId: String) =>
+        for {
+          ic  <- ZIO.access[InternalClient](_.internalClient)
+          url <- ic.url
+          call <- ic
             .genericGet[Run](
               URLUtils.makeURL(
-                basePath = cli.url,
+                basePath = url,
                 pathParameters = RunURL ++ Seq("get"),
                 queryParameters = Map("run_id" -> runId)
               )
             )
-            .mapError(error => RunError(error.getMessage))
-        }
-    }
+        } yield call
   }
 
   object Live extends Live

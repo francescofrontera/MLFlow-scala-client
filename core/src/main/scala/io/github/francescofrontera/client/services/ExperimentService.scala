@@ -22,30 +22,32 @@ object ExperimentService {
 
     def experimentService: Service[InternalClient] = new ExperimentService.Service[InternalClient] {
       def getAll: ExperimentResult[InternalClient, Experiments] =
-        ZIO.accessM[InternalClient](_.internalClient.getClient) flatMap { cli =>
-          import cli._
-
-          ClientCall
+        for {
+          ic  <- ZIO.access[InternalClient](_.internalClient)
+          url <- ic.url
+          call <- ic
             .genericGet[Experiments](
               URLUtils.makeURL(
                 pathParameters = ExperimentPath ++ Seq("list"),
-                basePath = cli.url
+                basePath = url
               )
             )
             .mapError(error => ExperimentsError(error.getMessage))
-        }
+        } yield call
 
       def getById(id: String): ExperimentResult[InternalClient, Experiment] =
-        ZIO.accessM[InternalClient](_.internalClient.getClient) flatMap { cli =>
-          import cli._
-
-          ClientCall
+        for {
+          ic  <- ZIO.access[InternalClient](_.internalClient)
+          url <- ic.url
+          call <- ic
             .genericGet[Experiment](
-              URLUtils.makeURL(basePath = cli.url,
+              URLUtils.makeURL(basePath = url,
                                pathParameters = ExperimentPath ++ Seq("get"),
                                queryParameters = Map("experiment_id" -> id))
             )
-        }
+            .mapError(error => ExperimentsError(error.getMessage))
+        } yield call
+
     }
   }
 
