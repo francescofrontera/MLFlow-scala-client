@@ -1,12 +1,13 @@
 package io.github.francescofrontera.client.services
 
-import io.github.francescofrontera.client._
+import io.github.francescofrontera.client.internal._
+import io.github.francescofrontera.models.Experiment._
 import io.github.francescofrontera.models._
 import io.github.francescofrontera.utils.URLUtils
 import zio._
 
 trait ExperimentService {
-  def experimentService: ExperimentService.Service[Any]
+  def experimentService: ExperimentService.Service[InternalClient]
 }
 
 object ExperimentService {
@@ -15,29 +16,56 @@ object ExperimentService {
   trait Service[R] {
     def getAll: ExperimentResult[R, Experiments]
     def getById(id: String): ExperimentResult[R, Experiment]
+    def create(experiment: ExperimentObject): ExperimentResult[R, ExperimentResponse]
   }
 
-  final class ExperimentServiceImpl(mlflowURL: String)(implicit be: InternalClient)
-      extends ExperimentService.Service[Any] {
+  trait Live extends ExperimentService {
     private[this] val ExperimentPath = "experiments" +: Nil
 
-    def getAll: Task[Experiments] =
-      ClientCall
-        .genericGet[Experiments](
-          URLUtils.makeURL(
-            pathParameters = ExperimentPath ++ Seq("list"),
-            basePath = mlflowURL
-          )
-        )
-        .mapError(error => ExperimentsError(error.getMessage))
+    def experimentService: Service[InternalClient] = new ExperimentService.Service[InternalClient] {
+      def create(experiment: ExperimentObject): ExperimentResult[InternalClient, ExperimentResponse] =
+        for {
+          ic  <- ZIO.access[InternalClient](_.internalClient)
+          url <- ic.url
+          uri = URLUtils.makeURL(pathParameters = ExperimentPath ++ Seq("create"), basePath = url)
+          call <- ic
+            .genericPost[ExperimentObject, ExperimentResponse](
+              uri = uri,
+              data = experiment
+            )
+            .mapError(error => ExperimentsError(error.getMessage))
+        } yield call
 
-    def getById(id: String): Task[Experiment] =
-      ClientCall
-        .genericGet[Experiment](
-          URLUtils.makeURL(basePath = mlflowURL,
-                           pathParameters = ExperimentPath ++ Seq("get"),
-                           queryParameters = Map("experiment_id" -> id))
-        )
-        .mapError(error => ExperimentsError(error.getMessage))
+      def getAll: ExperimentResult[InternalClient, Experiments] =
+        for {
+          ic  <- ZIO.access[InternalClient](_.internalClient)
+          url <- ic.url
+          call <- ic
+            .genericGet[Experiments](
+              URLUtils.makeURL(
+                pathParameters = ExperimentPath ++ Seq("list"),
+                basePath = url
+              )
+            )
+            .mapError(error => ExperimentsError(error.getMessage))
+        } yield call
+
+      def getById(id: String): ExperimentResult[InternalClient, Experiment] =
+        for {
+          ic  <- ZIO.access[InternalClient](_.internalClient)
+          url <- ic.url
+          call <- ic
+            .genericGet[Experiment](
+              URLUtils.makeURL(basePath = url,
+                               pathParameters = ExperimentPath ++ Seq("get"),
+                               queryParameters = Map("experiment_id" -> id))
+            )
+            .mapError(error => ExperimentsError(error.getMessage))
+        } yield call
+
+    }
+
   }
+
+  object Live extends Live
 }

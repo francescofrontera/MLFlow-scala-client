@@ -6,6 +6,7 @@ scalaVersion in ThisBuild := "2.13.1"
 
 lazy val sttpVersion       = "2.0.0-RC6"
 lazy val pureConfigVersion = "0.12.2"
+lazy val zioVersion        = "1.0.0-RC17"
 lazy val circeVersion      = "0.12.3"
 
 lazy val core = (project in file("core"))
@@ -53,7 +54,11 @@ lazy val core = (project in file("core"))
       "com.softwaremill.sttp.client" %% "async-http-client-backend-zio" % sttpVersion,
       "com.softwaremill.sttp.client" %% "circe"                         % sttpVersion,
       "io.circe"                     %% "circe-generic"                 % circeVersion,
-    )
+      //Test
+      "dev.zio" %% "zio-test"     % zioVersion % "test",
+      "dev.zio" %% "zio-test-sbt" % zioVersion % "test",
+    ),
+    testFrameworks ++= Seq(new TestFramework("zio.test.sbt.ZTestFramework"))
   )
 
 lazy val examples = (project in file("examples"))

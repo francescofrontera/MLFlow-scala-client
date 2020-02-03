@@ -3,25 +3,21 @@ MLFlow-scala-client is a fresh made, pure functional, wrapper around MFLow track
 
 ### Idea 
 ```scala 
-val clientResult: Either[Throwable, Experiments] =
-      MLFlowClient("http://localhost:5000/api/2.0/preview/mlflow")(_.experimentService.getAll).result
+object TryServices extends MLFlowDefaultRunner {
+  def main(args: Array[String]): Unit = {
+    val program: MLFlowClient#ClientResult[(Experiment, Run, ExperimentResponse)] =
+      MLFlowClient("http://localhost:5000/api/2.0/preview/mlflow") allService { ser =>
+        val experiment = ser.experimentService
+        val run        = ser.runService
 
-clientResult: Either[Throwable, Experiments] = Right(
-    Experiments(
-        List(
-            ExperimentObject(
-                0,
-                Default,
-                file:///Users/xxx/PycharmProjects/example/mlruns/0,
-                active
-            ),
-             ExperimentObject(
-                1,
-                3countries_fb_training,
-                file:///Users/xxx/PycharmProjects/example/mlruns/1,
-                active
-            )
-        )
-    )
-)
+        for {
+          exp <- experiment.create(ExperimentObject(name = "Home"))
+          one <- experiment.getById("1")
+          two <- run.getById("bebec7f85a104ba1b4cd8a8905a74127")
+        } yield (one, two, exp)
+      }
+
+    println(program.result)
+  }
+}
 ```
