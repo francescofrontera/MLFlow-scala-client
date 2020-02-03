@@ -1,19 +1,22 @@
 import io.github.francescofrontera.client.MLFlowClient
 import io.github.francescofrontera.client.runner.MLFlowDefaultRunner
-import io.github.francescofrontera.client.services.AllServiceLive.AllService
-import io.github.francescofrontera.models.{ Experiment, Run }
-import zio.ZIO
+import io.github.francescofrontera.models.{ Experiment, ExperimentResponse, Run }
+import io.github.francescofrontera.models.Experiment.ExperimentObject
 
 object TryServices extends MLFlowDefaultRunner {
   def main(args: Array[String]): Unit = {
-    val program: ZIO[AllService, Throwable, (Experiment, Run)] =
+    val program: MLFlowClient#ClientResult[(Experiment, Run, ExperimentResponse)] =
       MLFlowClient("http://localhost:5000/api/2.0/preview/mlflow") allService { ser =>
+        val experiment = ser.experimentService
+        val run        = ser.runService
+
         for {
-          one <- ser.experimentService.getById("1")
-          two <- ser.runService.getById("bebec7f85a104ba1b4cd8a8905a74127")
-        } yield (one, two)
+          exp <- experiment.create(ExperimentObject(name = "Home"))
+          one <- experiment.getById("1")
+          two <- run.getById("bebec7f85a104ba1b4cd8a8905a74127")
+        } yield (one, two, exp)
       }
 
-    println(execute.unsafeRun(program))
+    println(program.result)
   }
 }
