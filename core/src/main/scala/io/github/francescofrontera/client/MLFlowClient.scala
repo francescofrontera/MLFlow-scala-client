@@ -5,7 +5,7 @@ import io.github.francescofrontera.client.services.AllServiceLive.AllServiceT
 import sttp.client.asynchttpclient.zio.AsyncHttpClientZioBackend
 import zio._
 
-case class MLFlowClient(mlflowURL: String) {
+sealed case class MLFlowClient(mlflowURL: String) {
   type MLFLowResult[+A]  = IO[Throwable, A]
   type ClientResult[OUT] = ZIO[AllServiceT, Throwable, OUT]
 
