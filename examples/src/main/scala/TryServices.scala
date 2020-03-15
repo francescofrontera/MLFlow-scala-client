@@ -1,10 +1,13 @@
 import io.github.francescofrontera.client.MLFlowClient
 import io.github.francescofrontera.client.runner.MLFlowDefaultRunner
-import io.github.francescofrontera.models.{ Experiment, ExperimentResponse, Run }
-import io.github.francescofrontera.models.Experiment.ExperimentObject
+import io.github.francescofrontera.models._, Experiment._
 
-object TryServices extends MLFlowDefaultRunner {
+object TryServices {
+  val runner = new MLFlowDefaultRunner {}
+
   def main(args: Array[String]): Unit = {
+    import runner._
+
     val program: MLFlowClient#ClientResult[(Experiment, Run, ExperimentResponse)] =
       MLFlowClient("http://localhost:5000/api/2.0/preview/mlflow") allService { ser =>
         val experiment = ser.experimentService
