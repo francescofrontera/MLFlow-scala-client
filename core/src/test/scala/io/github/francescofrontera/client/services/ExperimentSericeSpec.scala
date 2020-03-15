@@ -8,21 +8,19 @@ import io.github.francescofrontera.models.Experiments
 import sttp.model.Uri
 import zio.test.Assertion._
 import zio.test._
-import zio.{ RIO, Task }
+import zio._
 
 object Stubs {
-  def apply(returnString: String): InternalClient =
-    new InternalClient {
-      def internalClient: InternalClient.Service[Any] =
-        new InternalClient.Service[Any] {
-          final def genericPost[E: Encoder, D: Decoder](uri: Uri, data: E): Task[D] = ???
-          final def url: RIO[Any, String]                                           = RIO.succeed("file:///./")
-          final def genericGet[D: Decoder](uri: Uri): Task[D] =
-            RIO.fromTry(parse(returnString).getOrElse(Json.Null).as[D].toTry)
-        }
-    }
+  def apply(returnString: String): Layer[Nothing, Has[InternalClient.Service]] =
+    ZLayer.succeed(new InternalClient.Service {
+      def genericPost[E: Encoder, D: Decoder](uri: Uri, data: E): Task[D] =
+        Task.fail(throw new RuntimeException("No Post call yet"))
+      def url: RIO[Any, String] = RIO.succeed("file:///./")
+      def genericGet[D: Decoder](uri: Uri): Task[D] =
+        RIO.fromTry(parse(returnString).getOrElse(Json.Null).as[D].toTry)
+    })
 
-  final def getAllExperiment: InternalClient = this.apply(
+  final def allExClientInt: Layer[Nothing, Has[InternalClient.Service]] = this.apply(
     """
       |{
       |  "experiments": [
@@ -41,9 +39,8 @@ object Stubs {
 object ExperimentSericeSpec extends DefaultRunnableSpec {
   def spec = suite("ExperimentServiceSpec")(
     testM("get all experiments") {
-      val env = ExperimentService.Live
-
-      val result = env.experimentService.getAll.provide(Stubs.getAllExperiment)
+      val result = getAllExperimentService
+        .provideLayer(Stubs.allExClientInt >>> ExperimentService.live)
 
       assertM(result)(
         equalTo(
@@ -61,4 +58,5 @@ object ExperimentSericeSpec extends DefaultRunnableSpec {
       )
     }
   )
+
 }
