@@ -1,8 +1,12 @@
 package io.github.francescofrontera.models
-import io.circe._, io.circe.generic.semiauto._
+import io.circe._
+import io.circe.generic.semiauto._
+import io.github.francescofrontera.models.Experiment.ExperimentObject
+import io.github.francescofrontera.models.error.MLFlowClientError
 
-sealed case class ExperimentsError(message: String) extends RuntimeException(message)
-sealed case class Experiments(experiments: List[Experiment])
+final case class ExperimentsError(message: String) extends MLFlowClientError(message)
+
+final case class Experiments(experiments: List[ExperimentObject])
 
 object Experiments {
   implicit val experimentsEncoder: Encoder[Experiments] = deriveEncoder

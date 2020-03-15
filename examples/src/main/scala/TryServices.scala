@@ -1,8 +1,8 @@
-# MLFlow-scala-client
-MLFlow-scala-client is a fresh made, pure functional, wrapper around MFLow tracking server API.
+import io.github.francescofrontera.client.MLFlowClient
+import io.github.francescofrontera.client.runner.MLFlowDefaultRunner
+import io.github.francescofrontera.models.{ Experiment, ExperimentResponse, Run }
+import io.github.francescofrontera.models.Experiment.ExperimentObject
 
-### Idea 
-```scala 
 object TryServices extends MLFlowDefaultRunner {
   def main(args: Array[String]): Unit = {
     val program: MLFlowClient#ClientResult[(Experiment, Run, ExperimentResponse)] =
@@ -20,4 +20,3 @@ object TryServices extends MLFlowDefaultRunner {
     println(program.result)
   }
 }
-```
