@@ -16,7 +16,7 @@ object Stubs {
       def internalClient: InternalClient.Service[Any] =
         new InternalClient.Service[Any] {
           final def genericPost[E: Encoder, D: Decoder](uri: Uri, data: E): Task[D] = ???
-          final def url: RIO[Any, String]                                           = RIO.succeed("")
+          final def url: RIO[Any, String]                                           = RIO.succeed("file:///./")
           final def genericGet[D: Decoder](uri: Uri): Task[D] =
             RIO.fromTry(parse(returnString).getOrElse(Json.Null).as[D].toTry)
         }
@@ -38,26 +38,27 @@ object Stubs {
   )
 }
 
-object ExperimentSericeSpec
-    extends DefaultRunnableSpec(
-      suite("ExperimentServiceSpec")(
-        testM("get all experiments") {
-          val env = ExperimentService.Live
+object ExperimentSericeSpec extends DefaultRunnableSpec {
+  def spec = suite("ExperimentServiceSpec")(
+    testM("get all experiments") {
+      val env = ExperimentService.Live
 
-          val result = env.experimentService.getAll.provide(Stubs.getAllExperiment)
+      val result = env.experimentService.getAll.provide(Stubs.getAllExperiment)
 
-          assertM(result)(equalTo(
-              Experiments(
-                List(
-                  ExperimentObject(
-                    "Default",
-                    Some(0),
-                    Some("file:///Users/francescofrontera/PycharmProjects/example/mlruns/0"),
-                    Some("active")
-                  )
-                )
+      assertM(result)(
+        equalTo(
+          Experiments(
+            List(
+              ExperimentObject(
+                "Default",
+                Some(0),
+                Some("file:///Users/francescofrontera/PycharmProjects/example/mlruns/0"),
+                Some("active")
               )
-            ))
-        }
+            )
+          )
+        )
       )
-    )
+    }
+  )
+}
