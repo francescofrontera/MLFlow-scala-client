@@ -46,9 +46,7 @@ object ExperimentSericeSpec
 
           val result = env.experimentService.getAll.provide(Stubs.getAllExperiment)
 
-          assertM(
-            result,
-            equalTo(
+          assertM(result)(equalTo(
               Experiments(
                 List(
                   ExperimentObject(
@@ -59,8 +57,7 @@ object ExperimentSericeSpec
                   )
                 )
               )
-            )
-          )
+            ))
         }
       )
     )
