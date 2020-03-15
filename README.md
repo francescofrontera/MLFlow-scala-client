@@ -1,3 +1,5 @@
+[![<ORG_NAME>](https://circleci.com/gh/francescofrontera/MLFlow-scala-client.svg?style=svg)](https://circleci.com/gh/francescofrontera/MLFlow-scala-client)
+
 # MLFlow-scala-client
 MLFlow-scala-client is a fresh made, pure functional, wrapper around MFLow tracking server API.
 
