@@ -23,7 +23,7 @@ private[client] object InternalClient {
     ZLayer.fromFunction(
       be =>
         new Service {
-          implicit val s            = be.get
+          implicit val bImplicitly            = be.get
 
           def url: RIO[Any, String] = RIO(mlflowURL)
 

@@ -21,7 +21,6 @@ object ExperimentService {
   val live: ZLayer[InternalClient, Nothing, ExperimentService] = ZLayer.fromFunction(
     ic =>
       new ExperimentService.Service {
-        val i = ic
         def create(experiment: ExperimentObject): Task[ExperimentResponse] =
           for {
             bPath <- ic.get.url
