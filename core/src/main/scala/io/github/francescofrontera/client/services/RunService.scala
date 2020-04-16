@@ -1,39 +1,20 @@
 package io.github.francescofrontera.client.services
 
-import io.github.francescofrontera.client.internal.InternalClient
+import io.github.francescofrontera.client.internal.InternalClient.InternalClient
 import io.github.francescofrontera.models.Run
-import io.github.francescofrontera.utils.URLUtils
-import zio.{ RIO, ZIO }
-
-trait RunService {
-  def runService: RunService.Service[InternalClient]
-}
+import zio._
 
 object RunService {
-  type RunResult[R, +A] = RIO[R, A]
+  type RunService = Has[RunService.Service]
 
-  trait Service[R] {
-    def getById(runId: String): RunResult[R, Run]
+  trait Service {
+    def getById(runId: String): Task[Run]
   }
 
-  trait Live extends RunService {
-    private[this] val RunURL: Seq[String] = "runs" +: Nil
-
-    def runService: Service[InternalClient] =
+  private[this] val RunURL: Seq[String] = "runs" +: Nil
+  val live: ZLayer[InternalClient, Nothing, RunService] = ZLayer.fromFunction(
+    ic =>
       (runId: String) =>
-        for {
-          ic  <- ZIO.access[InternalClient](_.internalClient)
-          url <- ic.url
-          call <- ic
-            .genericGet[Run](
-              URLUtils.makeURL(
-                basePath = url,
-                pathParameters = RunURL ++ Seq("get"),
-                queryParameters = Map("run_id" -> runId)
-              )
-            )
-        } yield call
-  }
-
-  object Live extends Live
+        ic.get.genericGet[Run](RunURL ++ Seq("get"), Map("run_id" -> runId))
+  )
 }

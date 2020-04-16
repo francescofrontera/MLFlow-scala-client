@@ -1,41 +1,58 @@
 package io.github.francescofrontera.client.internal
 
-import io.circe.{ Decoder, Encoder }
+import io.circe.{Decoder, Encoder}
+import io.github.francescofrontera.utils.URLUtils
 import sttp.client._
 import sttp.client.asynchttpclient.WebSocketHandler
 import sttp.client.circe._
-import sttp.model.Uri
 import zio._
 
-trait InternalClient {
-  def internalClient: InternalClient.Service[Any]
-}
-
 private[client] object InternalClient {
+  type InternalClient = Has[InternalClient.Service]
+
   type S = SttpBackend[Task, Nothing, WebSocketHandler]
 
-  trait Service[R] {
-    def url: RIO[R, String]
+  trait Service {
+    protected def url: Task[String]
 
-    def genericGet[D: Decoder](uri: Uri): Task[D]
-    def genericPost[E: Encoder, D: Decoder](uri: Uri, data: E): Task[D]
+    def genericGet[D: Decoder](uri: Seq[String], qParams: Map[String, String] = Map.empty): Task[D]
+    def genericPost[E: Encoder, D: Decoder](uri: Seq[String], data: E): Task[D]
   }
 
-  sealed case class Live(mlflowURL: String)(implicit be: S) extends InternalClient {
-    def internalClient: Service[Any] = new Service[Any] {
-      def url: RIO[Any, String] = RIO(mlflowURL)
+  def live(mlflowURL: String): ZLayer[Has[SttpBackend[Task, Nothing, WebSocketHandler]], Nothing, Has[Service]] =
+    ZLayer.fromFunction(
+      be =>
+        new Service {
+          implicit val bImplicitly = be.get
 
-      final def genericGet[D: Decoder](uri: Uri): Task[D] =
-        for {
-          decodeResult   <- basicRequest.get(uri).response(asJson[D]).send()
-          resultAsEither <- Task.fromEither(decodeResult.body)
-        } yield resultAsEither
+          protected val url: RIO[Any, String] = RIO(mlflowURL)
 
-      final def genericPost[E: Encoder, D: Decoder](uri: Uri, data: E): Task[D] =
-        for {
-          decodeResult <- basicRequest.post(uri).body(data).response(asJson[D]).send()
-          result       <- Task.fromEither(decodeResult.body)
-        } yield result
-    }
-  }
+          final def genericGet[D: Decoder](uri: Seq[String], qParams: Map[String, String] = Map.empty): Task[D] =
+            for {
+              baseUrl <- url
+              makeURI <- RIO(
+                URLUtils.makeURL(
+                  pathParameters = uri,
+                  basePath = baseUrl,
+                  queryParameters = qParams
+                )
+              )
+              decodeResult   <- basicRequest.get(makeURI).response(asJson[D]).send()
+              resultAsEither <- Task.fromEither(decodeResult.body)
+            } yield resultAsEither
+
+          final def genericPost[E: Encoder, D: Decoder](uri: Seq[String], data: E): Task[D] =
+            for {
+              baseUrl <- url
+              makeURI <- RIO(
+                URLUtils.makeURL(
+                  pathParameters = uri,
+                  basePath = baseUrl
+                )
+              )
+              decodeResult <- basicRequest.post(makeURI).body(data).response(asJson[D]).send()
+              result       <- Task.fromEither(decodeResult.body)
+            } yield result
+      }
+    )
 }
