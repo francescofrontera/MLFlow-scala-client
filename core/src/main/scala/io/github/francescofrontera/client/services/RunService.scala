@@ -2,7 +2,6 @@ package io.github.francescofrontera.client.services
 
 import io.github.francescofrontera.client.internal.InternalClient.InternalClient
 import io.github.francescofrontera.models.Run
-import io.github.francescofrontera.utils.URLUtils
 import zio._
 
 object RunService {
@@ -16,15 +15,6 @@ object RunService {
   val live: ZLayer[InternalClient, Nothing, RunService] = ZLayer.fromFunction(
     ic =>
       (runId: String) =>
-        for {
-          url <- ic.get.url
-          call <- ic.get.genericGet[Run](
-            URLUtils.makeURL(
-              basePath = url,
-              pathParameters = RunURL ++ Seq("get"),
-              queryParameters = Map("run_id" -> runId)
-            )
-          )
-        } yield call
+        ic.get.genericGet[Run](RunURL ++ Seq("get"), Map("run_id" -> runId))
   )
 }

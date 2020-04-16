@@ -7,7 +7,7 @@ import io.github.francescofrontera.models.{ Experiment, ExperimentResponse, Expe
 import zio.ZIO
 
 package object services {
-  type ALLSERVT = ExperimentService with RunService
+  type ALLSERV = ExperimentService with RunService
 
   final val AllService = ExperimentService.live ++ RunService.live
 
