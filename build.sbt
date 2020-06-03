@@ -4,9 +4,9 @@ version := "0.1"
 
 scalaVersion in ThisBuild := "2.13.1"
 
-lazy val sttpVersion       = "2.1.1"
+lazy val sttpVersion       = "2.1.5"
 lazy val pureConfigVersion = "0.12.2"
-lazy val zioVersion        = "1.0.0-RC19"
+lazy val zioVersion        = "1.0.0-RC20"
 lazy val circeVersion      = "0.13.0"
 
 lazy val core = (project in file("core"))
