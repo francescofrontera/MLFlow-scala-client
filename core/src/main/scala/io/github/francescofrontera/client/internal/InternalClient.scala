@@ -19,7 +19,7 @@ private[client] object InternalClient {
     def genericPost[E: Encoder, D: Decoder](uri: Seq[String], data: E): Task[D]
   }
 
-  def live(mlflowURL: String): ZLayer[Has[SttpBackend[Task, Nothing, WebSocketHandler]], Nothing, Has[Service]] =
+  def live(mlflowURL: String): ZLayer[Has[SttpBackend[Task, zio.stream.Stream[Throwable,Byte], WebSocketHandler]], Nothing, Has[Service]] =
     ZLayer.fromFunction(
       be =>
         new Service {

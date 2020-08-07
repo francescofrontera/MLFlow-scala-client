@@ -2,9 +2,8 @@ import io.github.francescofrontera.client.runner.MLFlowCRunner
 import io.github.francescofrontera.client.services._
 
 object TryServices {
-  def main(args: Array[String]): Unit = {
+  final val MLFlowURL = "http://localhost:5000/api/2.0/preview/mlflow"
 
-    MLFlowCRunner("http://localhost:5000/api/2.0/preview/mlflow")
-      .call(getAllExperimentService)
-  }
+  def main(args: Array[String]): Unit =
+    MLFlowCRunner(MLFlowURL).call(getAllExperimentService)
 }
