@@ -41,7 +41,7 @@ object Stubs {
   }
 }
 
-object ExperimentSericeSpec extends DefaultRunnableSpec {
+object ExperimentServiceSpec extends DefaultRunnableSpec {
   def spec = suite("ExperimentServiceSpec")(
     testM("get all experiments") {
       assertM(Stubs.allExperiments)(
