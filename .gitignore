@@ -18,3 +18,10 @@ project/plugins/project/
 ### Scala ###
 *.class
 *.log
+
+# VSCode + Metals
+.vscode/
+.metals/
+.bloop/
+.ammonite/
+metals.sbt
