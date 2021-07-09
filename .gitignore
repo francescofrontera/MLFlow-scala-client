@@ -20,6 +20,7 @@ project/plugins/project/
 *.log
 
 # VSCode + Metals
+.bps
 .vscode/
 .metals/
 .bloop/
