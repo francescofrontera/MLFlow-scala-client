@@ -2,7 +2,7 @@ name := "mlflow-scala-client"
 
 version := "0.1"
 
-scalaVersion in ThisBuild := "2.13.6"
+scalaVersion in ThisBuild := "2.13.10"
 
 lazy val sttpVersion       = "2.2.9"
 lazy val pureConfigVersion = "0.12.2"
